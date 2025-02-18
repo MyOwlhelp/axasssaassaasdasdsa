@@ -1970,14 +1970,15 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 				end
 			end
 		end
-
+		
+		local gameName = game.Name
 		if IsModel then
 			placename = (
 				FilePath
 					or sanitizeFileName("model " .. PlaceName .. " " .. (ToSaveInstance or tmp[1] or game):GetFullName())
 			) .. ".rbxmx"
 		else
-			placename = (FilePath or sanitizeFileName("place " .. PlaceName)) .. ".rbxlx"
+			placename = (FilePath or sanitizeFileName(gameName)) .. ".rbxlx"
 		end
 
 		if GLOBAL_ENV[placename] then
@@ -2119,17 +2120,11 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			end
 			Loading = task.spawn(function()
 				local spinner_count = 0
-				local chars = { "|", "/", "—", "\\" }
-				local chars_size = #chars
+				--[[local chars = { "|", "/", "—", "\\" }
+				local chars_size = #chars]]
 
 				local function getLoadingText()
-					spinner_count += 1
-
-					if chars_size < spinner_count then
-						spinner_count = 1
-					end
-
-					return chars[spinner_count]
+					print("Starting saving")
 				end
 
 				text ..= " "
@@ -2277,7 +2272,9 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 				counter[SName] = 0
 
 				-- Increment counter
-				counter[SName] = counter[SName] + 1
+				while task.wait(11) do
+					counter[SName] = counter[SName] + 1
+				end
 
 				-- Run decompilation with progress tracking
 				local ok, result = run_with_loading(
@@ -3237,7 +3234,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		StatusText.Text = "Saving..."
 
 		StatusText.BackgroundTransparency = 1
-		StatusText.Font = Enum.Font.Code
+		--StatusText.Font = Enum.Font.Code
 		StatusText.AnchorPoint = Vector2.new(1)
 		StatusText.Position = UDim2.new(1)
 		StatusText.Size = UDim2.new(0.3, 0, 0, 20)
@@ -3245,7 +3242,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		StatusText.TextColor3 = Color3.new(1, 1, 1)
 		StatusText.TextScaled = true
 		StatusText.TextStrokeTransparency = 0.7
-		StatusText.TextXAlignment = Enum.TextXAlignment.Right
+		StatusText.TextXAlignment = Enum.TextXAlignment.Center
 		StatusText.TextYAlignment = Enum.TextYAlignment.Top
 
 		StatusText.Parent = StatusGui
@@ -3356,15 +3353,16 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 				local Log10 = math.log10(elapse_t)
 				local ExtraTime = 10
 				if ok then
-					StatusText.Text = string.format("Saved! Time %.3f seconds; Size %s", elapse_t, get_size_format())
-					StatusText.TextColor3 = Color3.new(0, 1)
+					local gameName = game.Name
+					StatusText.Text = string.format("Saved to the file " .. gameName .. ".rbxlx in %.3f secs", elapse_t) -- TODO: Nothing.
+					--StatusText.TextColor3 = Color3.new(0, 1)
 					task.wait(Log10 * 2 + ExtraTime)
 				else
 					if Loading then
 						task.cancel(Loading)
 						Loading = nil
 					end
-					StatusText.Text = "Failed! Check F9 console for more info"
+					StatusText.Text = "Failed Check F9 console for more info"
 					StatusText.TextColor3 = Color3.new(1)
 					warn("Error found while saving:")
 					warn(err)
