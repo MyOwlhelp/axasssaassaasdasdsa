@@ -1,6 +1,6 @@
 -- Improved Reader
 
-local FLOAT_PRECISION = 99
+local FLOAT_PRECISION = 24
 
 local Reader = {}
 
