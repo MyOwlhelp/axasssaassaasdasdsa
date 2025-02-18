@@ -1,106 +1,91 @@
--- Improved Reader
-
+-- Not using slow metatables here because we need it fast
 local FLOAT_PRECISION = 24
-
 local Reader = {}
 
 function Reader.new(bytecode)
 	local stream = buffer.fromstring(bytecode)
-	local cursor = 0
-	-- Initialize the object
+	local cursor = 1  -- Start from index 1 (Lua convention)
+
 	local self = {}
 
-	-- Get the length of the stream
 	function self:len()
 		return buffer.len(stream)
 	end
 
-	-- Read the next byte from the stream
 	function self:nextByte()
 		local result = buffer.readu8(stream, cursor)
-		cursor += 1
+		cursor = cursor + 1
 		return result
 	end
-
-	-- Read the next signed byte
 	function self:nextSignedByte()
 		local result = buffer.readi8(stream, cursor)
-		cursor += 1
+		cursor = cursor + 1
 		return result
 	end
-
-	-- Read the specified number of bytes into a table
 	function self:nextBytes(count)
 		local result = {}
 		for i = 1, count do
-			result[i] = self:nextByte()
+			table.insert(result, self:nextByte())
 		end
 		return result
 	end
 
-	-- Read the next character (1 byte as a character)
 	function self:nextChar()
-		return string.char(self:nextByte())
+		local result = string.char(self:nextByte())
+		return result
 	end
 
-	-- Read the next 32-bit unsigned integer
 	function self:nextUInt32()
 		local result = buffer.readu32(stream, cursor)
-		cursor += 4
+		cursor = cursor + 4
 		return result
 	end
-
-	-- Read the next 32-bit signed integer
 	function self:nextInt32()
 		local result = buffer.readi32(stream, cursor)
-		cursor += 4
+		cursor = cursor + 4
 		return result
 	end
 
-	-- Read the next float (32-bit) with specified precision
 	function self:nextFloat()
 		local result = buffer.readf32(stream, cursor)
-		cursor += 4
-		return tonumber(string.format(`%0.${FLOAT_PRECISION}f`, result))
+		cursor = cursor + 4
+		return tonumber(string.format(`%0.{FLOAT_PRECISION}f`, result))
 	end
 
-	-- Read a variable-length integer
 	function self:nextVarInt()
 		local result = 0
-		for i = 0, 4 do
-			local byte = self:nextByte()
-			result = bit32.bor(result, bit32.lshift(bit32.band(byte, 0x7F), i * 7))
-			if not bit32.btest(byte, 0x80) then
-				break
-			end
-		end
+		local shift = 0
+		local byte
+		repeat
+			byte = self:nextByte()
+			result = result + ((byte % 128) * (2 ^ shift)) -- Simulate bitwise OR and left shift
+			shift = shift + 7
+		until (byte < 128) or (shift >= 32) -- Check if the MSB is 0 or shift exceeds 32 bits
 		return result
 	end
 
-	-- Read a string of a specified length (or use a VarInt for length)
 	function self:nextString(len)
 		len = len or self:nextVarInt()
 		if len == 0 then
 			return ""
+		else
+			local result = buffer.readstring(stream, cursor, len)
+			cursor = cursor + len
+			return result
 		end
-		local result = buffer.readstring(stream, cursor, len)
-		cursor += len
-		return result
 	end
 
-	-- Read the next double (64-bit float)
 	function self:nextDouble()
 		local result = buffer.readf64(stream, cursor)
-		cursor += 8
+		cursor = cursor + 8
 		return result
-	end
-
-	-- Set precision for floating-point numbers
-	function self:Set(precision)
-		FLOAT_PRECISION = precision
 	end
 
 	return self
+end
+
+function Reader:Set(precision)
+	FLOAT_PRECISION = precision or 24  -- Default value
 end
 
 return Reader
