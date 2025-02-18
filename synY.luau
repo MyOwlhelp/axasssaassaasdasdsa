@@ -2255,7 +2255,6 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 					task.wait() -- TODO Maybe remove?
 				end
 				
-				-- Function to count instances of a specific class
 				local function countInstances(scriptType)
 					local count = 0
 					for _, instance in pairs(game:GetDescendants()) do
@@ -2269,26 +2268,33 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 				-- Count instances of LocalScript and ModuleScript
 				local localScriptCount = countInstances("LocalScript")
 				local moduleScriptCount = countInstances("ModuleScript")
-				local Combined = localScriptCount + moduleScriptCount
+				local totalScripts = localScriptCount + moduleScriptCount
 
 				-- Initialize counter
 				local SName = script.Name
-				local counter = {}
-				counter[SName] = 0
+				local counter = 0
 
-				-- Increment counter
-				while task.wait(11) do
-					counter[SName] = counter[SName] + 1
+				-- Function to decompile scripts
+				local function decompileScripts()
+					for _, instance in pairs(game:GetDescendants()) do
+						if instance:IsA("LocalScript") or instance:IsA("ModuleScript") then
+							local ok, result = run_with_loading(
+								"Decompiling scripts... (" .. counter + 1 .. "/" .. totalScripts .. ")",
+								true,
+								nil,
+								decomp,
+								instance,
+								script
+							)
+							if ok then
+								counter = counter + 1
+							else
+								warn("Failed to decompile: " .. instance:GetFullName())
+							end
+						end
+					end
 				end
-
-				-- Run decompilation with progress tracking
-				local ok, result = run_with_loading(
-					"Decompiling scripts... (" .. counter[SName] .. "/" .. Combined .. ")",
-					true,
-					nil,
-					decomp,
-					script
-				)
+				decompileScripts()
 
 				-- Handle empty output
 				if not result then
