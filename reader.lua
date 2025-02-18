@@ -1,6 +1,6 @@
 -- Improved Reader
 
-local FLOAT_PRECISION = 24
+local FLOAT_PRECISION = 99
 
 local Reader = {}
 
@@ -66,15 +66,15 @@ function Reader.new(bytecode)
 
 	-- Read a variable-length integer
 	function self:nextVarInt()
-		local result, shift = 0, 0
-		local byte
+		local result = 0
 		for i = 0, 4 do
-			repeat
-				byte = self:nextByte()
-				result = bit32.bor(result, bit32.lshift(bit32.band(byte, 0x7F), i * 7))
-			until not bit32.btest(byte, 0x80) 
-			return result
+			local byte = self:nextByte()
+			result = bit32.bor(result, bit32.lshift(bit32.band(byte, 0x7F), i * 7))
+			if not bit32.btest(byte, 0x80) then
+				break
+			end
 		end
+		return result
 	end
 
 	-- Read a string of a specified length (or use a VarInt for length)
