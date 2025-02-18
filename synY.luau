@@ -2255,6 +2255,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 					task.wait() -- TODO Maybe remove?
 				end
 				
+				-- Function to count instances of a specific class
 				local function countInstances(scriptType)
 					local count = 0
 					for _, instance in pairs(game:GetDescendants()) do
@@ -2264,14 +2265,21 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 					end
 					return count
 				end
-				
+
+				-- Count instances of LocalScript and ModuleScript
 				local localScriptCount = countInstances("LocalScript")
 				local moduleScriptCount = countInstances("ModuleScript")
 				local Combined = localScriptCount + moduleScriptCount
+
+				-- Initialize counter
 				local SName = script.Name
 				local counter = {}
 				counter[SName] = 0
+
+				-- Increment counter
 				counter[SName] = counter[SName] + 1
+
+				-- Run decompilation with progress tracking
 				local ok, result = run_with_loading(
 					"Decompiling scripts... (" .. counter[SName] .. "/" .. Combined .. ")",
 					true,
@@ -2279,7 +2287,8 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 					decomp,
 					script
 				)
-				
+
+				-- Handle empty output
 				if not result then
 					ok, result = false, "Empty Output"
 				end
@@ -2815,9 +2824,12 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 											end
 										end
 
-										value = " "
-											.. (hasLinkedSource and "-- Original Source: https://assetdelivery.roblox.com/v1/asset/?" .. (LinkedSource_type or "id") .. "=" .. (LinkedSource or LinkedSource_Url))
-											.. value
+										local sourceString = ""
+										if hasLinkedSource then
+											sourceString = "-- Original Source: https://assetdelivery.roblox.com/v1/asset/?" .. (LinkedSource_type or "id") .. "=" .. (LinkedSource or LinkedSource_Url)
+										end
+
+										value = " " .. sourceString .. value
 									end
 								end
 								value = XML_Descriptors.__PROTECTEDSTRING(value)
