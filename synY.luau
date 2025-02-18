@@ -1971,14 +1971,13 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			end
 		end
 		
-		local gameName = game.Name
 		if IsModel then
 			placename = (
 				FilePath
 					or sanitizeFileName("model " .. PlaceName .. " " .. (ToSaveInstance or tmp[1] or game):GetFullName())
 			) .. ".rbxmx"
 		else
-			placename = (FilePath or sanitizeFileName(gameName)) .. ".rbxlx"
+			placename = (FilePath or sanitizeFileName(PlaceName)) .. ".rbxlx"
 		end
 
 		if GLOBAL_ENV[placename] then
@@ -2120,11 +2119,17 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			end
 			Loading = task.spawn(function()
 				local spinner_count = 0
-				--[[local chars = { "|", "/", "—", "\\" }
-				local chars_size = #chars]]
+				local chars = { " ", " ", " ", " " }
+				local chars_size = #chars
 
 				local function getLoadingText()
-					print("Starting saving")
+					spinner_count += 1
+
+					if chars_size < spinner_count then
+						spinner_count = 1
+					end
+
+					return chars[spinner_count]
 				end
 
 				text ..= " "
@@ -2988,22 +2993,10 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 					.. (#RecoveredScripts ~= 0 and "\t\tIMPORTANT: Original Source of these Scripts was Recovered: " .. service.HttpService:JSONEncode(
 						RecoveredScripts
 						) .. "\n" or "")
-					.. [[
-		Thank you for using UniversalSynSaveInstance (Join to Copy Games) https://discord.gg/wx4ThpAsmw.
-
-		If you didn't save in Binary (rbxl) - it's recommended to save the game right away to take advantage of the binary format & to preserve values of certain properties if you used IgnoreDefaultProperties setting (as they might change in the future).
-		You can do that by going to FILE -> Save to File As -> Make sure File Name ends with .rbxl -> Save
-
-		ServerStorage, ServerScriptService and Server Scripts are IMPOSSIBLE to save because of FilteringEnabled.
-
-		If your player cannot spawn into the game, please move the scripts in StarterPlayer somewhere else. Then run `game:GetService("Players").CharacterAutoLoads = true`.
-		And use "Play Here" to start game instead of "Play" to spawn your Character where your Camera currently is.
-
-		If the chat system does not work, please use the explorer and delete everything inside the TextChatService/Chat service(s). 
-		Or run `game:GetService("Chat"):ClearAllChildren() game:GetService("TextChatService"):ClearAllChildren()`
-				
+					.. [[	
+		SYNAPSE Y
+		
 		If Union and MeshPart collisions don't work, run the script below in the Studio Command Bar:
-				
 				
 		local C = game:GetService("CoreGui")
 		local D = Enum.CollisionFidelity.Default
@@ -3013,13 +3006,6 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 				v.CollisionFidelity = D
 			end
 		end
-		print("Done")
-				
-		If you can't move the Camera, run this script in the Studio Command Bar:
-			
-		workspace.CurrentCamera.CameraType = Enum.CameraType.Fixed
-		
-		Or Destroy the Camera.
 
 		This file was generated with the following settings:
 		]]
@@ -3237,7 +3223,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		--StatusText.Font = Enum.Font.Code
 		StatusText.AnchorPoint = Vector2.new(1)
 		StatusText.Position = UDim2.new(1)
-		StatusText.Size = UDim2.new(0.3, 0, 0, 20)
+		StatusText.Size = UDim2.new(0.425, 0, 0.132, 0)
 
 		StatusText.TextColor3 = Color3.new(1, 1, 1)
 		StatusText.TextScaled = true
@@ -3353,8 +3339,11 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 				local Log10 = math.log10(elapse_t)
 				local ExtraTime = 10
 				if ok then
-					local gameName = game.Name
-					StatusText.Text = string.format("Saved to the file " .. gameName .. ".rbxlx in %.3f secs", elapse_t) -- TODO: Nothing.
+					local PlaceName = game.PlaceId
+					pcall(function()
+						PlaceName ..= " " .. service.MarketplaceService:GetProductInfo(PlaceName).Name
+					end)
+					StatusText.Text = string.format("Saved to the file " .. PlaceName .. ".rbxlx in %.3f secs", elapse_t) -- TODO: Nothing.
 					--StatusText.TextColor3 = Color3.new(0, 1)
 					task.wait(Log10 * 2 + ExtraTime)
 				else
